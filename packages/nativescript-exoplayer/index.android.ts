@@ -81,7 +81,36 @@ export class Video extends VideoBase {
 	}
 
 	createNativeView() {
-		const nativeView = new com.google.android.exoplayer2.ui.PlayerView(this._context);
+
+		// ----------
+		// 2023-10-13
+		// Dirty hack to change the surface_type to texture_view in the PlayerView!
+		// It requires the layer "player_view.xml" in the App_Resources/Android/src/main/res/layout/
+		// source https://github.com/nstudio/nativescript-plugins/issues/36
+
+		// const nativeView = new com.google.android.exoplayer2.ui.PlayerView(this._context);
+
+        let res = this._context.getResources();
+        const layoutId = res.getIdentifier("player_view", 'layout', this._context.getPackageName());
+
+        const parser = res.getLayout(layoutId)
+
+        let state = 0;
+        do {
+            state = parser.next();
+            if (state == org.xmlpull.v1.XmlPullParser.START_TAG) {
+                if (parser.getName() === "com.google.android.exoplayer2.ui.PlayerView") {
+                    var attrs = android.util.Xml.asAttributeSet(parser);
+                    break;
+                }
+            }
+        } while(state != org.xmlpull.v1.XmlPullParser.END_DOCUMENT);
+
+        const nativeView = new com.google.android.exoplayer2.ui.PlayerView(this._context, attrs);
+
+		// end of the hack
+		// ---------------
+
 		if (this.enableSubtitles) {
 		}
 		return nativeView;
